@@ -154,7 +154,14 @@ if __name__ == "__main__":
                         ref_img_index = len(ref_images)-1
                 load_images()
             elif key == ord('o'):
-                explorer_on_file(os.path.join(args.submissions_dir, students[student_index]))
+                cpp_files = Path(os.path.join(args.submissions_dir, students[student_index])).rglob("*.cpp")
+                done = False
+                for f in cpp_files:
+                    explorer_on_file(os.path.dirname(f))
+                    done = True
+                    break
+                if not done:
+                    explorer_on_file(os.path.join(args.submissions_dir, students[student_index]))
             elif key == ord('1'):
                 mode = "source"
                 update_window()
