@@ -9,7 +9,13 @@ import cv2
 filename_aliases = {
     "hw_1_6_alpha_circles.png": "hw_1_6_alpha_cirlces.png"
 }
+main_src_filename = "hw1.cpp"
 
+def vscode_on_file(path):
+    try:
+        subprocess.run(f"code {path}", shell=True)
+    except Exception as e:
+        print(f"Failed to open vscode: {str(e)}")
 
 def explorer_on_file(path):
     path = os.path.abspath(path)
@@ -50,6 +56,7 @@ if __name__ == "__main__":
     ref_img  = None
     src_img  = None
     diff_img = None
+    src_img_path = ""
     ref_img_index = 0
     student_index = 0
     mode = "source"
@@ -63,7 +70,7 @@ if __name__ == "__main__":
             student_index = students.index(args.student)
 
     def update_window():
-        cv2.setWindowTitle(window_name, f"{students[student_index]} ({student_index+1}/{len(students)}) {ref_images[ref_img_index]} [{mode}]")
+        cv2.setWindowTitle(window_name, f"{students[student_index]} ({student_index+1}/{len(students)}) {ref_images[ref_img_index] + " [reference]" if mode == "reference" else src_img_path}")
         if mode == "reference":
             cv2.imshow(window_name, ref_img)
         elif mode == "source":
@@ -75,11 +82,13 @@ if __name__ == "__main__":
         global ref_img
         global src_img
         global diff_img
+        global src_img_path
         f = ref_images[ref_img_index]
 
         ref_img  = cv2.imread(os.path.join(args.ref_dir, f), cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
         src_img  = None
         diff_img = None
+        src_img_path = ""
 
         student_folder = os.path.join(args.submissions_dir, students[student_index])
     
@@ -101,6 +110,7 @@ if __name__ == "__main__":
             update_window()
             return
 
+        src_img_path = os.path.relpath(os.path.abspath(src_file), os.path.abspath(student_folder))
         src_img = cv2.imread(src_file, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
         if ref_img.shape != src_img.shape:
             print(f"Image size mismatch for {src_file} {ref_img.shape} != {src_img.shape}")
@@ -127,7 +137,7 @@ if __name__ == "__main__":
                 break
             if key == -1:
                 continue
-            elif key == 27: # esc key
+            elif key == 27 or key == ord('q'): # 27=esc
                 break
             elif key == ord('n'):
                 student_index = max(student_index-1, 0)
@@ -154,14 +164,21 @@ if __name__ == "__main__":
                         ref_img_index = len(ref_images)-1
                 load_images()
             elif key == ord('o'):
-                cpp_files = Path(os.path.join(args.submissions_dir, students[student_index])).rglob("*.cpp")
                 done = False
-                for f in cpp_files:
-                    explorer_on_file(os.path.dirname(f))
+                for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob("*.cpp"):
                     done = True
+                    explorer_on_file(os.path.dirname(f))
                     break
                 if not done:
                     explorer_on_file(os.path.join(args.submissions_dir, students[student_index]))
+            elif key == ord('c'):
+                done = False
+                for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob(main_src_filename):
+                    done = True
+                    vscode_on_file(f)
+                    break
+                if not done:
+                    vscode_on_file(os.path.join(args.submissions_dir, students[student_index]))
             elif key == ord('1'):
                 mode = "source"
                 update_window()

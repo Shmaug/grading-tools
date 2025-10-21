@@ -24,4 +24,5 @@ Controls:
 - 1/2/3: show reference/submission/error images.
 - comma/period: previous/next image.
 - n/m: previous/next student.
-- o: open student subfolder.
+- o: open student's code folder in the file browser.
+- c: open student's source file in vscode.
