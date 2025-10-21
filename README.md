@@ -15,10 +15,12 @@ For submitted zip files, the contents are extracted into the student's subfolder
 For submitted loose files, the tool strips the extra metadata added by Canvas to recover the original filename, and extracts it into the student's subfolder.
 
 ## `grade_images.py`
-Usage: `python grade_images.py <ref_dir> <submissions_dir> <student_name>`
+Usage: `python grade_images.py <ref_dir> <submissions_dir> --student <student>`
 
-This tool allows the user to flip between the submitted image and the reference image. 
-`<ref_dir>` should contain the reference images. `<submissions_dir>` is the root folder containing all students' subfolders. `<student_name>` is the name of the student's subfolder to examine.
+This tool allows the user to browse the submitted images and flip between the submitted and reference images. 
+`<ref_dir>` should contain the reference images. `<submissions_dir>` is the root folder containing all students' subfolders.
+Optionally, `--student <student>` can be passed in to start at a particular student name or index.
 Controls:
 - 1/2/3: show reference/submission/error images
-- comma/period: show previous/next image
+- comma/period: previous/next image
+- n/m: previous/next student
