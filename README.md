@@ -21,6 +21,7 @@ This tool allows the user to browse the submitted images and flip between the su
 `<ref_dir>` should contain the reference images. `<submissions_dir>` is the root folder containing all students' subfolders.
 Optionally, `--student <student>` can be passed in to start at a particular student name or index.
 Controls:
-- 1/2/3: show reference/submission/error images
-- comma/period: previous/next image
-- n/m: previous/next student
+- 1/2/3: show reference/submission/error images.
+- comma/period: previous/next image.
+- n/m: previous/next student.
+- o: open student subfolder.
