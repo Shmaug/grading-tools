@@ -43,8 +43,8 @@ if __name__ == "__main__":
         print(f"Error: '{args.ref_dir}' does not exist.")
         exit(1)
 
-    students   = os.listdir(args.submissions_dir)
-    ref_images = os.listdir(args.ref_dir)
+    students   = sorted(os.listdir(args.submissions_dir))
+    ref_images = sorted(os.listdir(args.ref_dir))
     
     null_image = np.full((480,640,3), (255,0,255), dtype=np.uint8)
     textsize = cv2.getTextSize("No submission found!", cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
