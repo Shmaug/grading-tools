@@ -1,12 +1,30 @@
 import os
 import argparse
 from pathlib import Path
+import platform
+import subprocess
 import numpy as np
 import cv2
 
 filename_aliases = {
     "hw_1_6_alpha_circles.png": "hw_1_6_alpha_cirlces.png"
 }
+
+
+def explorer_on_file(path):
+    path = os.path.abspath(path)
+    system = platform.system()
+    try:
+        if system == "Windows":
+            # explorer supports /select,<path>
+            subprocess.Popen(['explorer', f'/select,{path.replace("/", "\\\\")}'])
+            return
+        if system == "Darwin":
+            # reveal in Finder
+            subprocess.Popen(['open', '-R', path])
+            return
+    except Exception as e:
+        print(f"Could not open file explorer for {path}: {e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Canvas student submission comparison utility.')
@@ -136,7 +154,7 @@ if __name__ == "__main__":
                         ref_img_index = len(ref_images)-1
                 load_images()
             elif key == ord('o'):
-
+                explorer_on_file(os.path.join(args.submissions_dir, students[student_index]))
             elif key == ord('1'):
                 mode = "source"
                 update_window()
