@@ -13,7 +13,7 @@ main_src_filename = "hw1.cpp"
 
 def vscode_on_file(path):
     try:
-        subprocess.run(f"code {path}", shell=True)
+        subprocess.run(['code', path], shell=True)
     except Exception as e:
         print(f"Failed to open vscode: {str(e)}")
 
@@ -23,7 +23,7 @@ def explorer_on_file(path):
     try:
         if system == "Windows":
             # explorer supports /select,<path>
-            subprocess.Popen(['explorer', f'/select,{path.replace("/", "\\\\")}'])
+            subprocess.Popen(['explorer', path])
             return
         if system == "Darwin":
             # reveal in Finder
@@ -166,6 +166,7 @@ if __name__ == "__main__":
             elif key == ord('o'):
                 done = False
                 for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob("*.cpp"):
+                    print(os.path.dirname(f))
                     done = True
                     explorer_on_file(os.path.dirname(f))
                     break

@@ -2,11 +2,18 @@ import os
 import shutil
 import argparse
 from pathlib import Path
+import tkinter as tk
+from tkinter import filedialog
 
 ignore = [
     ".git",
     "handouts",
     "__MACOSX"
+]
+
+names = [
+    "*1_7*.png",
+    "*custom*.png"
 ]
 
 if __name__ == "__main__":
@@ -21,19 +28,30 @@ if __name__ == "__main__":
 
     maxlen = max([ len(s) for s in students ])
     missing = 0
+
+    root = tk.Tk()
+    root.withdraw()
     
     for student in students:
         student_dir = os.path.join(args.submissions_dir, student)
         found = None
-        for f in Path(student_dir).rglob("*1_7*.png"):
-            ignored = False
-            for i in ignore:
-                if i in str(f):
-                    ignored = True
+        for name in names:
+            for f in Path(student_dir).rglob(name):
+                ignored = False
+                for i in ignore:
+                    if i in str(f):
+                        ignored = True
+                        break
+                if not ignored:
+                    found = f
                     break
-            if not ignored:
-                found = f
+            if found is not None:
                 break
+
+        if found is None:
+            found = filedialog.askopenfilename(filetypes=[("PNG files", "*.png")], initialdir=student_dir)
+            if not os.path.exists(found):
+                found = None
 
         if found is not None:
             shutil.copy(found, os.path.join(args.output_dir, student + ".png"))
