@@ -22,7 +22,7 @@ def explorer_on_file(path):
     system = platform.system()
     try:
         if system == "Windows":
-            # explorer supports /select,<path>
+            # reveal in Explorer
             subprocess.Popen(['explorer', path])
             return
         if system == "Darwin":
@@ -61,6 +61,10 @@ if __name__ == "__main__":
     student_index = 0
     mode = "source"
 
+    scaled_image = None
+
+    image_scale = 1
+
     if args.student is not None:
         if str(args.student).isnumeric():
             student_index = int(args.student)
@@ -71,12 +75,25 @@ if __name__ == "__main__":
 
     def update_window():
         cv2.setWindowTitle(window_name, f"{students[student_index]} ({student_index+1}/{len(students)}) {ref_images[ref_img_index] + " [reference]" if mode == "reference" else src_img_path}")
-        if mode == "reference":
-            cv2.imshow(window_name, ref_img)
-        elif mode == "source":
-            cv2.imshow(window_name, src_img if src_img is not None else null_image)
-        elif mode == "difference":
-            cv2.imshow(window_name, diff_img if diff_img is not None else null_image)
+        
+        target_img = None
+        match mode:
+            case "reference":
+                target_img = ref_img
+            case "source":
+                target_img = src_img
+            case "difference":
+                target_img = diff_img
+        
+        if target_img is None:
+            target_img = null_image
+        else:
+            if image_scale != 1:
+                h,w,_ = target_img.shape
+                target_img = cv2.resize(target_img, (w * image_scale, h * image_scale), interpolation=cv2.INTER_NEAREST)
+        
+        
+        cv2.imshow(window_name, target_img)
 
     def load_images():
         global ref_img
@@ -112,6 +129,11 @@ if __name__ == "__main__":
 
         src_img_path = os.path.relpath(os.path.abspath(src_file), os.path.abspath(student_folder))
         src_img = cv2.imread(src_file, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+        if src_img is None:
+            print(f"Failed to load {src_file}")
+            update_window()
+            return
+
         if ref_img.shape != src_img.shape:
             print(f"Image size mismatch for {src_file} {ref_img.shape} != {src_img.shape}")
             src_img = None
@@ -139,13 +161,13 @@ if __name__ == "__main__":
                 continue
             elif key == 27 or key == ord('q'): # 27=esc
                 break
-            elif key == ord('n'):
+            elif key == ord('n'): # previous student
                 student_index = max(student_index-1, 0)
                 load_images()
-            elif key == ord('m'):
+            elif key == ord('m'): # next student
                 student_index = min(student_index+1, len(students)-1)
                 load_images()
-            elif key == ord(','):
+            elif key == ord(','): # previous image
                 ref_img_index -= 1
                 if ref_img_index < 0:
                     if student_index > 0:
@@ -154,7 +176,7 @@ if __name__ == "__main__":
                     else:
                         ref_img_index = 0
                 load_images()
-            elif key == ord('.'):
+            elif key == ord('.'): # next image
                 ref_img_index += 1
                 if ref_img_index >= len(ref_images):
                     if student_index < len(students)-1:
@@ -163,7 +185,7 @@ if __name__ == "__main__":
                     else:
                         ref_img_index = len(ref_images)-1
                 load_images()
-            elif key == ord('o'):
+            elif key == ord('o'): # view submitted files in file browser
                 done = False
                 for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob("*.cpp"):
                     print(os.path.dirname(f))
@@ -172,7 +194,7 @@ if __name__ == "__main__":
                     break
                 if not done:
                     explorer_on_file(os.path.join(args.submissions_dir, students[student_index]))
-            elif key == ord('c'):
+            elif key == ord('c'): # view submitted code in vscode
                 done = False
                 for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob(main_src_filename):
                     done = True
@@ -180,13 +202,19 @@ if __name__ == "__main__":
                     break
                 if not done:
                     vscode_on_file(os.path.join(args.submissions_dir, students[student_index]))
-            elif key == ord('1'):
+            elif key == ord('-'): # zoom out
+                image_scale = max(1, image_scale // 2)
+                update_window()
+            elif key == ord('='): # zoom in
+                image_scale *= 2
+                update_window()
+            elif key == ord('1'): # show submitted image
                 mode = "source"
                 update_window()
-            elif key == ord('2'):
+            elif key == ord('2'): # show reference image
                 mode = "reference"
                 update_window()
-            elif key == ord('3'):
+            elif key == ord('3'): # show difference image
                 mode = "difference"
                 update_window()
         except KeyboardInterrupt:
