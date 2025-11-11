@@ -83,7 +83,7 @@ if __name__ == "__main__":
             case "source":
                 target_img = src_img
             case "difference":
-                target_img = diff_img*10
+                target_img = diff_img*10 if diff_img is not None else None
         
         if target_img is None:
             target_img = null_image
