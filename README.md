@@ -26,3 +26,8 @@ Controls:
 - n/m: previous/next student.
 - o: open student's code folder in the file browser.
 - c: open student's source file in vscode.
+
+## `find_custom_images.py`
+Usage: `python find_custom_images.py <submissions_dir> <output_dir> --filter <name1,name2>`
+
+This tool helps collect specific files from every student's submission. If the file cannot be found automatically by name, a file dialog opens to allow the user to select the file manually. The `--filter` option allows the user to specify which names to search. By default, the filter is `*custom*.png`.

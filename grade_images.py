@@ -6,11 +6,6 @@ import subprocess
 import numpy as np
 import cv2
 
-filename_aliases = {
-    "hw_1_6_alpha_circles.png": "hw_1_6_alpha_cirlces.png"
-}
-main_src_filename = "hw1.cpp"
-
 def vscode_on_file(path):
     try:
         subprocess.run(['code', path], shell=True)
@@ -36,7 +31,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Canvas student submission comparison utility.')
     parser.add_argument('ref_dir',         help='Directory containing the reference images.')
     parser.add_argument('submissions_dir', help='Directory containing the images to compare, i.e., the student subfolder.')
-    parser.add_argument('--student', required=False, help='Start at a student subfolder name or index.')
+    parser.add_argument('--main_src_file', required=False, help='Optional source file to navigate to when "c" is pressed.')
+    parser.add_argument('--student',       required=False, help='Start at a student subfolder name or index.')
     args = parser.parse_args()
 
     if not os.path.exists(args.ref_dir):
@@ -74,7 +70,11 @@ if __name__ == "__main__":
             student_index = students.index(args.student)
 
     def update_window():
-        cv2.setWindowTitle(window_name, f"{students[student_index]} ({student_index+1}/{len(students)}) {ref_images[ref_img_index] + " [reference]" if mode == "reference" else src_img_path}")
+        title = f"{students[student_index]} ({student_index+1}/{len(students)})"
+        title += f" | {ref_images[ref_img_index] + " [reference]" if mode == "reference" else src_img_path}"
+        if diff_img is not None:
+            title += f" | Max/avg diff.: {np.max(diff_img)}/{np.average(diff_img)}"
+        cv2.setWindowTitle(window_name, title)
         
         target_img = None
         match mode:
@@ -83,7 +83,7 @@ if __name__ == "__main__":
             case "source":
                 target_img = src_img
             case "difference":
-                target_img = diff_img
+                target_img = diff_img*10
         
         if target_img is None:
             target_img = null_image
@@ -91,7 +91,6 @@ if __name__ == "__main__":
             if image_scale != 1:
                 h,w,_ = target_img.shape
                 target_img = cv2.resize(target_img, (w * image_scale, h * image_scale), interpolation=cv2.INTER_NEAREST)
-        
         
         cv2.imshow(window_name, target_img)
 
@@ -114,14 +113,6 @@ if __name__ == "__main__":
         for s in Path(student_folder).rglob(f):
             src_file = s
             break
-        if not os.path.exists(src_file) and f in filename_aliases:
-            for alias in filename_aliases[f]:
-                for s in Path(student_folder).rglob(alias):
-                    src_file = s
-                    break
-                if src_file:
-                    break
-
         if not os.path.exists(src_file):            
             print(f"Could not find {f} in {students[student_index]}")
             update_window()
@@ -140,14 +131,8 @@ if __name__ == "__main__":
             update_window()
             return
 
-        ref_img_norm = ref_img.astype(np.float32)/255.0
-        diff_img = abs(ref_img_norm - src_img.astype(np.float32)/255.0) / (ref_img_norm + 0.01*np.average(ref_img_norm))
+        diff_img = abs(ref_img.astype(np.int8) - src_img.astype(np.int8)).astype(np.uint8)
         
-        error_image_path = os.path.join(student_folder, "__error_images", os.path.splitext(f)[0] + ".error.png")
-        if not os.path.exists(error_image_path):
-            os.makedirs(os.path.join(student_folder, "__error_images"), exist_ok=True)
-            cv2.imwrite(error_image_path, np.clip(diff_img*255.0, 0, 255.0).astype(np.uint8))
-
         update_window()
 
     load_images()
@@ -195,13 +180,14 @@ if __name__ == "__main__":
                 if not done:
                     explorer_on_file(os.path.join(args.submissions_dir, students[student_index]))
             elif key == ord('c'): # view submitted code in vscode
-                done = False
-                for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob(main_src_filename):
-                    done = True
-                    vscode_on_file(f)
-                    break
-                if not done:
-                    vscode_on_file(os.path.join(args.submissions_dir, students[student_index]))
+                if args.main_src_file is not None:
+                    done = False
+                    for f in Path(os.path.join(args.submissions_dir, students[student_index])).rglob(args.main_src_file):
+                        done = True
+                        vscode_on_file(f)
+                        break
+                    if not done:
+                        vscode_on_file(os.path.join(args.submissions_dir, students[student_index]))
             elif key == ord('-'): # zoom out
                 image_scale = max(1, image_scale // 2)
                 update_window()

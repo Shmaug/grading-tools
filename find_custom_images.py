@@ -12,15 +12,28 @@ ignore = [
 ]
 
 names = [
-    "*1_7*.png",
     "*custom*.png"
 ]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Canvas student submission comparison utility.')
     parser.add_argument('submissions_dir', help='Directory containing the student subfolders.')
-    parser.add_argument('output_dir', help='Directory containing the copied custom images.')
+    parser.add_argument('output_dir',      help='Directory containing the copied custom images.')
+    parser.add_argument('--filter',        help="Additonal names to search for")
     args = parser.parse_args()
+
+    # support multiple --filter inputs (list from argparse, repeated flags, or comma-separated)
+    if args.filter:
+        extra = []
+        if isinstance(args.filter, str):
+            extra = [s.strip() for s in args.filter.split(',') if s.strip()]
+        else:
+            for it in args.filter:
+                if isinstance(it, str) and ',' in it:
+                    extra.extend([s.strip() for s in it.split(',') if s.strip()])
+                else:
+                    extra.append(it)
+        names.extend(extra)
 
     os.makedirs(args.output_dir, exist_ok=True)
 
