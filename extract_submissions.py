@@ -7,7 +7,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Canvas student submission extraction utility.')
     parser.add_argument('submissions_zip', help='Zipped submissions as downloaded from Canvas')
     parser.add_argument('output_folder',   help='Output folder. Student subfolders will be placed here.')
-    parser.add_argument('--verbose', action='store_true', help='Print the names of extracted files.')
+    parser.add_argument('--verbose',       action='store_true', help='Print the names of extracted files.')
+    parser.add_argument('--student',       help='Optional student name. If specified, only that student\'s submission will be extracted.')
     args = parser.parse_args()
 
     input_zip     = args.submissions_zip
@@ -29,6 +30,9 @@ if __name__ == "__main__":
             for f in files:
                 s = f.split('_')
                 student_name = s[0]
+
+                if args.student is not None and student_name != args.student:
+                    continue
 
                 # Submitted files are named as:
                 # <name>[_LATE]_<student id>_<submission id>_<filename>-index
@@ -61,7 +65,7 @@ if __name__ == "__main__":
                 if name[idx] == '-':
                     name = name[:idx]
                 file_name = name + ext
-
+                
                 if args.verbose:
                     print(f"{f}  ->  {student_name}/{file_name}")
 

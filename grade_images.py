@@ -1,10 +1,14 @@
 import os
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 import argparse
 from pathlib import Path
 import platform
 import subprocess
 import numpy as np
 import cv2
+
+# This script allows the user to view imaegs from each student and compare them to reference images.
+# Note: The names of the submitted image files must match the reference image file names to be found.
 
 def vscode_on_file(path):
     try:
@@ -83,7 +87,7 @@ if __name__ == "__main__":
             case "source":
                 target_img = src_img
             case "difference":
-                target_img = diff_img*10 if diff_img is not None else None
+                target_img = diff_img + 0.5 if diff_img is not None else None
         
         if target_img is None:
             target_img = null_image
@@ -126,12 +130,18 @@ if __name__ == "__main__":
             return
 
         if ref_img.shape != src_img.shape:
-            print(f"Image size mismatch for {src_file} {ref_img.shape} != {src_img.shape}")
-            src_img = None
-            update_window()
-            return
+            print(f"Image size mismatch for {src_file} should be {ref_img.shape} but is {src_img.shape}")
+            src_img = cv2.resize(src_img, (ref_img.shape[1], ref_img.shape[0]), interpolation=cv2.INTER_NEAREST)
+            # src_img = None
+            # update_window()
+            # return
 
-        diff_img = abs(ref_img.astype(np.int8) - src_img.astype(np.int8)).astype(np.uint8)
+        diff_img = ref_img.astype(np.float32) - src_img.astype(np.float32)
+        diff_img /= ref_img + 0.01 * np.average(ref_img)
+
+        if os.path.splitext(src_file)[1] == ".exr":
+            src_img = pow(src_img, 1.0 / 2.2)
+            ref_img = pow(ref_img, 1.0 / 2.2)
         
         update_window()
 
