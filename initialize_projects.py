@@ -118,14 +118,14 @@ if __name__ == '__main__':
     parser.add_argument('starter',         type=str, help='Path to starter code.')
     parser.add_argument('submissions_dir', type=str, help='Path to submissions folder, containing student subfolders.')
     parser.add_argument('output_dir',      type=str, help='Path to output folder, where student projects will be created.')
-    parser.add_argument('files',           type=str, help='Comma-separated list of file names to copy. If the file is not found in a student\'s submission, an error message is printed.')
-    parser.add_argument('--student',       type=str, help='Only operate on a single student.')
+    parser.add_argument('files',           nargs="+", type=str, help='Comma-separated list of file names to copy. If the file is not found in a student\'s submission, an error message is printed.')
+    parser.add_argument('--students',      nargs="+", type=str, help='Only operate on specified students.')
     parser.add_argument('--silent',        action='store_true')
     args = parser.parse_args()
 
-    file_list = args.files.split(',')
-    input_path = args.submissions_dir
-    output_path = args.output_dir
+    file_list         = args.files
+    input_path        = args.submissions_dir
+    output_path       = args.output_dir
     starter_code_path = args.starter
 
     subdir_luts = build_subdir_luts(starter_code_path)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         namelist = tqdm.tqdm(namelist)
     for submitted_filename in namelist:
         student_name = submitted_filename.split('_')[0]
-        if args.student is not None and student_name != args.student:
+        if args.students is not None and student_name not in args.students:
             continue
         if student_name not in students:
             students.append(student_name)

@@ -37,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument('submissions_dir', help='Directory containing the images to compare, i.e., the student subfolder.')
     parser.add_argument('--main_src_file', required=False, help='Optional source file to navigate to when "c" is pressed.')
     parser.add_argument('--student',       required=False, help='Start at a student subfolder name or index.')
+    parser.add_argument('--exposure',      required=False, type=float, help='Exposure for HDR images.')
     args = parser.parse_args()
 
     if not os.path.exists(args.ref_dir):
@@ -56,6 +57,7 @@ if __name__ == "__main__":
     ref_img  = None
     src_img  = None
     diff_img = None
+    diff_img_blur = None
     src_img_path = ""
     ref_img_index = 0
     student_index = 0
@@ -74,10 +76,16 @@ if __name__ == "__main__":
             student_index = students.index(args.student)
 
     def update_window():
-        title = f"{students[student_index]} ({student_index+1}/{len(students)})"
+        global ref_img
+        global src_img
+        global diff_img
+        global diff_img_blur
+        global src_img_path
+
+        title = f"({student_index+1}/{len(students)}) {students[student_index]}"
         title += f" | {ref_images[ref_img_index] + " [reference]" if mode == "reference" else src_img_path}"
         if diff_img is not None:
-            title += f" | Max/avg diff.: {np.max(diff_img)}/{np.average(diff_img)}"
+            title += f" | MAPE: {np.average(diff_img):.4f}, max: {np.max(diff_img):.4f}"
         cv2.setWindowTitle(window_name, title)
         
         target_img = None
@@ -88,6 +96,13 @@ if __name__ == "__main__":
                 target_img = src_img
             case "difference":
                 target_img = diff_img + 0.5 if diff_img is not None else None
+            case "difference_blurred":
+                if diff_img is None:
+                    target_img = None
+                else:
+                    if diff_img_blur is None:
+                        diff_img_blur = cv2.GaussianBlur(diff_img, (11,11), 0)
+                    target_img = diff_img_blur + 0.5
         
         if target_img is None:
             target_img = null_image
@@ -102,6 +117,7 @@ if __name__ == "__main__":
         global ref_img
         global src_img
         global diff_img
+        global diff_img_blur
         global src_img_path
         f = ref_images[ref_img_index]
 
@@ -128,7 +144,7 @@ if __name__ == "__main__":
             print(f"Failed to load {src_file}")
             update_window()
             return
-
+        
         if ref_img.shape != src_img.shape:
             print(f"Image size mismatch for {src_file} should be {ref_img.shape} but is {src_img.shape}")
             src_img = cv2.resize(src_img, (ref_img.shape[1], ref_img.shape[0]), interpolation=cv2.INTER_NEAREST)
@@ -136,10 +152,17 @@ if __name__ == "__main__":
             # update_window()
             # return
 
-        diff_img = ref_img.astype(np.float32) - src_img.astype(np.float32)
+        if src_img.dtype == np.float32:
+            src_img = np.clip(np.nan_to_num(src_img), 0, 1e9)
+        
+        diff_img = src_img.astype(np.float32) - ref_img.astype(np.float32)
         diff_img /= ref_img + 0.01 * np.average(ref_img)
+        diff_img_blur = None
 
-        if os.path.splitext(src_file)[1] == ".exr":
+        if os.path.splitext(src_file)[1] in [".exr", "*.hdr"]:
+            if args.exposure is not None:
+                src_img *= 2**args.exposure
+                ref_img *= 2**args.exposure
             src_img = pow(src_img, 1.0 / 2.2)
             ref_img = pow(ref_img, 1.0 / 2.2)
         
@@ -212,6 +235,9 @@ if __name__ == "__main__":
                 update_window()
             elif key == ord('3'): # show difference image
                 mode = "difference"
+                update_window()
+            elif key == ord('4'):
+                mode = "difference_blurred"
                 update_window()
         except KeyboardInterrupt:
             cv2.destroyAllWindows()

@@ -16,11 +16,12 @@ For submitted loose files, the tool strips the extra metadata added by Canvas to
 Files matching `--ignore` will be skipped.
 
 ## `grade_images.py`
-Usage: `python grade_images.py <ref_dir> <submissions_dir> --student <student>`
+Usage: `python grade_images.py <ref_dir> <submissions_dir> --student <student> --exposure <exposure>`
 
 This tool allows the user to browse the submitted images and flip between the submitted and reference images. 
 `<ref_dir>` should contain the reference images. `<submissions_dir>` is the root folder containing all students' subfolders.
-Optionally, `--student <student>` can be passed in to start at a particular student name or index.
+Optionally, `--student <student>` can be passed in to start at a particular student name or index. 
+HDR images are gamma-corrected before being shown. `--exposure <exposure>` can be used to adjust the exposure of HDR images. 
 Controls:
 - 1/2/3: show reference/submission/error images.
 - comma/period: previous/next image.
